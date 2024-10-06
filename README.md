@@ -5,6 +5,21 @@
 &nbsp;&nbsp;&nbsp;&nbsp; Our architecture will be a single cycle implementation. This means that every instruction will only take up one clock cycle. The ISA will also follow the data memory load/store principle which means that there are only two instructions that can access data memory. No other instruction can access data memory so an ADD instruction can not add two numbers then immediately store the result into data memory. The goal of this ISA is to minimize the number of different instructions so that machine code instructions will use less bits to specify what operations will be performed. This will allow instructions to have more bits reserved for specifying the operation registers and values. Making the ISA single cycle should also simplify the hardware design making it more intuitive.
 <br/>
 
+## Design Specifications
+- 9-bit instrctions
+- 14 different instructions
+- 15 register allocations
+  - 13 general purpose registers
+  - 2 reserved registers for other operations
+- 256 data memory allocations
+
+## Control Flow Design
+&nbsp;&nbsp;&nbsp;&nbsp; We are going to do both relative branching and absolute branching. For relative branching this means we need to know both the branch amount and current program counter to determine the true memory_adress location. The jump amount will be 8 bit 2’s complement. This means we can branch up to about ±127 instructions away from the current instruction pointed by the PC. If we need to jump more we can just call the branch more times. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp; For absolute branching we only need to know the location of the exact instruction we want to branch to. The branch address will be unsigned since it seems odd to be able to access negative instruction addresses. The main issue with this method is that it is limited to the address that it can branch to. We have 2 absolute branch instructions that allow us to access instruction addresses 0 to 508.
+
+## Memory Addrssing Modes
+&nbsp;&nbsp;&nbsp;&nbsp;  We will support indirect absolute addressing for load/store instructions and indirect relative addressing for branching. The exact address will not be specified in the load/store instruction itself. Instead the memory address needs to be stored into register R1 beforehand. Then the load/store instruction will go to that memory address. These addresses will not be relative addresses but rather absolute addresses. This means that The memory address stored at R1 needs to be the exact memory address and should not be a value that needs to be added to a different instruction memory address. For example assume R1 = 0b0001_0004. Now perform the instruction LDR R7 which is the load from data memory instruction. Now R7 holds whatever byte value was stored at data memory location 0b0001_0004. For branching a signed 2’s complement number needs to be stored into R1. The number will increment or decrement the current program counter.
+
 ## Architecture Block Diagram
 ![image info](./Architecture_Block_Diagram.PNG)
 <br/>
@@ -26,3 +41,31 @@
 | BNE \= branch not equal | 4 bit opcode 1011 <br/> filler bit is 0 <br/> 4 bit operand register | // Assume R7 hold 0b0000\_0004 <br/> // Assume R1 holds 1 <br/> // Assume current PC is 0x0000\_000C <br/> BNE R7 <br/> // now program counter points to instruction at 0x0000\_0010  | If two values are not equal then branch to address located by the 4 bit operand register. To check if two values are not equal check the not equal flag at R1 Need to set not equal flag before hand be performing necessary equality operations |
 | JMP | 4 bit opcode 1011 <br/> filler bit is 1 <br/> 4 bit operand register | // Assume R7 hold 04 <br/> // Assume R1 holds 1 <br/> // Assume current PC is 0x0000\_000C <br/> JMP R7 <br/> // now program counter points to instruction at 0x0000\_0004 | if two values are not equal then branch to address located by the 4 bit operand register. To check if two values are not equal check the not equal flag at R1 Need to set not equal flag before hand be performing necessary equality operations Can branch from 0 to 254 since registers are 8 bits and can specify max of 254 |
 | BJP | 4 bit opcode 1100 <br/> filler bit is 0 <br/> 4 bit operand register | // Assume R7 hold 04 <br/> // Assume R1 holds 1 <br/> // Assume current PC is 0x0000\_000C <br/> BJP R7 <br/> // now program counter points to instruction 259 | Does a similar absolute branching to JMP. The difference is that it has an offset of 255 that is added so that absolute branching can access instruction addresses 255 to 508 |
+
+## ISA in Example: Partial Assembly Code of Hamming Encoder
+// index for getting data-mem[0] to data-mem[29] <br/>
+MOV R13 #0 <br/>
+// index for getting data-mem[30] to data-mem[59] <br/>
+LDR R14 R15 <br/>
+
+// loading from data_mem[0] and data_mem[1] and so on <br/>
+LDR R3 R13 <br/>
+ADD R13 R13 #1 <br/>
+LDR R4 R13 <br/>
+ADD R13 R13 #1 <br/>
+
+// parity bit 8 will be in r9 <br/>
+LSR R9 R4 #2     // bit 11 <br/>
+LSR R10 R4 #1   // bit 10 <br/>
+EOR R9 R9 R10 <br/>
+MOV R10 R4       // bit 9 <br/>
+EOR R9 R9 R10 <br/>
+LSR R10 R3 #7   // bit 8 <br/>
+EOR R9 R9 R10 <br/>
+LSR R10 R3 #6   // bit 7 <br/>
+EOR R9 R9 R10 <br/>
+LSR R10 R3 #5   // bit 6 <br/>
+EOR R9 R9 R10 <br/>
+LSR R10 R3 #4   // bit 5 <br/>
+EOR R9 R9 R10 <br/>
+AND R9 R9 #1    // least sig bit is where the xor of all the previous bits is located <br/>

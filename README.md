@@ -69,3 +69,4 @@ EOR R9 R9 R10 <br/>
 LSR R10 R3 #4   // bit 5 <br/>
 EOR R9 R9 R10 <br/>
 AND R9 R9 #1    // least sig bit is where the xor of all the previous bits is located <br/>
+...

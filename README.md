@@ -42,7 +42,7 @@
 | JMP | 4 bit opcode 1011 <br/> filler bit is 1 <br/> 4 bit operand register | // Assume R7 hold 04 <br/> // Assume R1 holds 1 <br/> // Assume current PC is 0x0000\_000C <br/> JMP R7 <br/> // now program counter points to instruction at 0x0000\_0004 | if two values are not equal then branch to address located by the 4 bit operand register. To check if two values are not equal check the not equal flag at R1 Need to set not equal flag before hand be performing necessary equality operations Can branch from 0 to 254 since registers are 8 bits and can specify max of 254 |
 | BJP | 4 bit opcode 1100 <br/> filler bit is 0 <br/> 4 bit operand register | // Assume R7 hold 04 <br/> // Assume R1 holds 1 <br/> // Assume current PC is 0x0000\_000C <br/> BJP R7 <br/> // now program counter points to instruction 259 | Does a similar absolute branching to JMP. The difference is that it has an offset of 255 that is added so that absolute branching can access instruction addresses 255 to 508 |
 
-## ISA in Example: Partial Assembly Code of Hamming Encoder
+## Using ISA Example: Partial Assembly Code of Hamming Encoder
 // index for getting data-mem[0] to data-mem[29] <br/>
 MOV R13 #0 <br/>
 // index for getting data-mem[30] to data-mem[59] <br/>
